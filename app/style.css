@@ -1,0 +1,11 @@
+body { margin: 0; overflow: hidden; background: #000; }
+canvas { display: block; }
+#ui-container { position: fixed; bottom: 20px; left: 20px; right: 20px; z-index: 10; display: flex; justify-content: space-between; align-items: flex-end; pointer-events: none; }
+#joystick { width: 120px; height: 120px; border-radius: 50%; background: rgba(0,0,0,0.2); position: relative; pointer-events: auto; }
+#stick { width: 50px; height: 50px; border-radius: 50%; background: rgba(0,0,0,0.5); position: absolute; top: 35px; left: 35px; }
+#action-buttons { display: flex; gap: 15px; align-items: flex-end; }
+.action-button { width: 80px; height: 80px; border-radius: 50%; background: rgba(0,0,0,0.4); color: white; display: flex; justify-content: center; align-items: center; font-size: 1.5em; font-family: sans-serif; pointer-events: auto; user-select: none; cursor: pointer; }
+#godown-button { width: 60px; height: 60px; font-size: 1.2em; }
+#freecam-button { width: 60px; height: 60px; font-size: 1.2em; }
+#freecam-button.active { background: rgba(0, 150, 255, 0.7); border: 2px solid white; }
+#debug-panel { position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.5); color: white; padding: 8px; font-family: monospace; font-size: 14px; border-radius: 5px; z-index: 100; pointer-events: none; line-height: 1.5; }
