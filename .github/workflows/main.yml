@@ -1,4 +1,4 @@
-name: Lydecraft - Build & Auto-Sign APK/AAB
+name: Lydecraft - Clean, Build & Auto-Sign APK/AAB
 
 on:
   push:
@@ -11,33 +11,44 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Código
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
+      # 3. Dependências
       - name: Install npm dependencies
         run: npm install
 
+      # 4. Remover pasta android
+      - name: Remove android folder
+        run: rm -rf android
+
+      # 5. Criar projeto Android
       - name: Add Android platform
         run: npx cap add android
 
+      # 6. Sincronizar Capacitor
       - name: Sync Capacitor project
         run: npx cap sync android
 
+      # 7. JDK
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
+      # 8. Permissão gradlew
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
-      # Gerar keystore automaticamente
+      # 9. Gerar keystore automaticamente
       - name: Generate Keystore
         run: |
           keytool -genkeypair \
@@ -50,7 +61,7 @@ jobs:
             -keypass 123456 \
             -dname "CN=Lydecraft, OU=Dev, O=Game, L=City, S=State, C=BR"
 
-      # Configurar assinatura no Gradle
+      # 10. Configurar assinatura Gradle
       - name: Configure Gradle signing
         run: |
           echo "" >> android/app/build.gradle
@@ -70,15 +81,19 @@ jobs:
           echo "    }" >> android/app/build.gradle
           echo "}" >> android/app/build.gradle
 
+      # 11. Build Debug APK
       - name: Build Debug APK
         run: cd android && ./gradlew assembleDebug
 
+      # 12. Build Release APK (assinado)
       - name: Build Signed Release APK
         run: cd android && ./gradlew assembleRelease
 
+      # 13. Build Release AAB (assinado)
       - name: Build Signed Release AAB
         run: cd android && ./gradlew bundleRelease
 
+      # 14. Upload artefatos
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
