@@ -41,16 +41,31 @@ export class World {
         this.materials['dirt'].u_time_generated = new THREE.Uniform(0);
         this.materials['dirt'].u_animation_duration = new THREE.Uniform(this.animationDuration);
 
+        const texturePaths = {
+            sand: 'src/Assets/World/sand/sand.png',
+            stone: 'src/Assets/World/stone/stone.png',
+            leaf: 'src/Assets/World/leaves/leaves.png',
+            trunk_side: 'src/Assets/World/trunk/trunk_side.png',
+            trunk_top: 'src/Assets/World/trunk/trunk_up_down.png'
+        };
+
+        for (const name in texturePaths) {
+            const texture = textureLoader.load(texturePaths[name]);
+            texture.magFilter = THREE.NearestFilter;
+            texture.minFilter = THREE.NearestFilter;
+            this.materials[name] = new THREE.MeshLambertMaterial({ map: texture, side: THREE.DoubleSide });
+        }
+
         const materialColors = {
-            sand: 0xF0E68C, snow: 0xffffff,
-            stone: 0x888888, trunk: 0x5C3D2E, leaf: 0x2E8B57, cactus: 0x006400,
-            water: 0x4488ff
+            snow: 0xffffff,
+            water: 0x4488ff,
+            cactus: 0x006400
         };
 
         for (const name in materialColors) {
             const mat = new THREE.MeshLambertMaterial({
                 color: materialColors[name],
-                transparent: name === 'water',
+                transparent: name === 'water' || name === 'leaf',
                 opacity: name === 'water' ? 0.7 : 1.0,
                 side: THREE.DoubleSide
             });
@@ -76,12 +91,9 @@ export class World {
         const { cx, cz, geometries, heightMap, chunkData, blockTypes } = event.data;
         const chunkKey = `${cx},${cz}`;
 
-        console.log(`[World] Received message for chunk ${chunkKey}. Geometries:`, geometries); // Added this line
-
         if (this.chunks[chunkKey] && this.chunks[chunkKey].state === 'pending') {
             const chunk = new Chunk(this.scene, cx, cz, geometries, this.materials, this.globalUniforms);
             this.chunks[chunkKey] = { chunk, state: 'loaded', chunkData: new Uint8Array(chunkData) };
-            console.log(`[World] Stored chunkData for ${chunkKey}:`, this.chunks[chunkKey].chunkData);
             this.worldHeightMaps[chunkKey] = heightMap;
             
             // Store blockTypes if not already stored (assuming it's consistent across chunks)
@@ -94,7 +106,6 @@ export class World {
                 const spawnX = this.chunkSize / 2;
                 const spawnZ = this.chunkSize / 2;
                 const groundHeight = this.getGroundHeight(spawnX, spawnZ);
-                console.log(`[World] Spawning player at: ${spawnX}, ${groundHeight}, ${spawnZ}`); // Added this line
                 this.onPlayerSpawn(spawnX, spawnZ, groundHeight);
             }
         }
@@ -146,7 +157,6 @@ export class World {
             const localZ = Math.floor(THREE.MathUtils.euclideanModulo(z, this.chunkSize));
             let height = heightMap[`${localX},${localZ}`];
             if (isNaN(height)) { // Check for NaN
-                console.warn(`[World] getGroundHeight: Detected NaN height for ${x},${z}. Returning 0.`);
                 return 0; // Return a safe default
             }
             return height || 0;
@@ -183,7 +193,6 @@ export class World {
         // Calculate index in the 1D array
         const index = ly * this.chunkSize * this.chunkSize + lx * this.chunkSize + lz;
         const blockType = chunk.chunkData[index];
-        console.log(`World: getBlock(${x},${y},${z}) -> blockType: ${blockType}`);
         return blockType;
     }
 }

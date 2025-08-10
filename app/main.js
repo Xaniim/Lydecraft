@@ -22,10 +22,8 @@ const player = new Player(world, scene); // Pass 'scene' here
 const camera = new VoxelCamera();
 
 world.onPlayerSpawn = (spawnX, spawnZ, groundHeight) => {
-    console.log(`[Main] world.onPlayerSpawn triggered with: ${spawnX}, ${groundHeight}, ${spawnZ}`);
     try {
         player.spawn(spawnX, groundHeight, spawnZ);
-        console.log(`[Main] Player spawn call successful.`);
     } catch (error) {
         console.error(`[Main] Error during player spawn:`, error);
     }
