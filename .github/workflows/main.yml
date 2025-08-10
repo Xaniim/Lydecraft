@@ -1,4 +1,4 @@
-name: Lydecraft - Build APK & AAB
+name: Lydecraft - Build & Sign APK/AAB
 
 on:
   push:
@@ -8,63 +8,99 @@ on:
 
 jobs:
   build:
-    name: Build Debug, Release APK and AAB
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Baixa o código
+      # 1. Checkout
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Configura Node.js
+      # 2. Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      # 3. Instala dependências
+      # 3. Instalar dependências
       - name: Install npm dependencies
         run: npm install
 
-      # 4. Adiciona Android se não existir
-      - name: Add Android platform
+      # 4. Adicionar Android se não existir
+      - name: Add Android platform if missing
         run: |
           if [ ! -d "android" ]; then
             npx cap add android
           fi
 
-      # 5. Sincroniza Capacitor
+      # 5. Sync Capacitor
       - name: Sync Capacitor project
         run: npx cap sync android
 
-      # 6. Configura JDK
+      # 6. JDK
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # 7. Dá permissão ao gradlew
+      # 7. Gradlew permissão
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
-      # 8. Build Debug APK
+      # 8. Restaurar keystore
+      - name: Restore Keystore from secrets
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/my-release-key.jks
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+
+      # 9. Configurar assinatura no Gradle
+      - name: Configure Gradle signing
+        run: |
+          cat <<EOF >> android/app/build.gradle
+          android {
+              signingConfigs {
+                  release {
+                      storeFile file("my-release-key.jks")
+                      storePassword System.getenv("KEYSTORE_PASSWORD")
+                      keyAlias System.getenv("KEY_ALIAS")
+                      keyPassword System.getenv("KEY_PASSWORD")
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                  }
+              }
+          }
+          EOF
+
+      # 10. Build APK Debug
       - name: Build Debug APK
         run: cd android && ./gradlew assembleDebug
 
-      # 9. Build Release APK
+      # 11. Build APK Release Assinado
+      - name: Build Signed Release APK
         run: cd android && ./gradlew assembleRelease
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
-      # 10. Build Release AAB
-      - name: Build Release AAB
+      # 12. Build AAB Release Assinado
+      - name: Build Signed Release AAB
         run: cd android && ./gradlew bundleRelease
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
-      # 11. Upload artifacts
+      # 13. Upload artefatos
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: lydecraft-builds
+          name: lydecraft-signed-builds
           path: |
             android/app/build/outputs/apk/debug/app-debug.apk
-            android/app/build/outputs/apk/release/app-release-unsigned.apk
+            android/app/build/outputs/apk/release/app-release.apk
             android/app/build/outputs/bundle/release/app-release.aab
