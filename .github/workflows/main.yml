@@ -1,64 +1,72 @@
-# Lydecraft - Build APK & AAB
-# This workflow installs dependencies, syncs the capacitor project,
-# and then builds the Android debug/release APKs and AAB.
-
+# Nome do Workflow
 name: Lydecraft - Build APK & AAB
 
+# Gatilhos (Triggers): Executa em push ou pull request para a branch 'alpha'
 on:
   push:
     branches: [ alpha ]
   pull_request:
     branches: [ alpha ]
 
+# Tarefas (Jobs) a serem executadas
 jobs:
   build:
+    # Nome da tarefa que aparece no GitHub
     name: Build Debug, Release APK and AAB
+    # Máquina virtual que será usada para executar a tarefa
     runs-on: ubuntu-latest
 
+    # Passos (Steps) da tarefa
     steps:
+      # 1. Baixa o código do seu repositório
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # --- New Steps for Capacitor Project Setup ---
+      # 2. Configura o ambiente Node.js (essencial para Capacitor)
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Specify your project's node version
+          node-version: '20' # Especifique a versão do Node.js do seu projeto
 
+      # 3. Instala as dependências do projeto (Capacitor CLI, etc.)
       - name: Install npm dependencies
         run: npm install
 
+      # 4. Sincroniza o projeto web com a plataforma nativa Android
       - name: Sync Capacitor project
         run: npx cap sync android
-      # --- End of New Steps ---
 
+      # 5. Configura o ambiente Java (JDK) necessário para o Android
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
+      # 6. Dá permissão de execução para o script do Gradle
+      # O 'working-directory' garante que o comando seja executado dentro da pasta /android
       - name: Make gradlew executable
-        # The working-directory makes the command cleaner.
-        # It's now looking for 'gradlew' inside the 'android' folder.
         run: chmod +x ./gradlew
         working-directory: ./android
 
+      # 7. Compila o APK de Debug
       - name: Build Debug APK
         run: ./gradlew assembleDebug
         working-directory: ./android
 
+      # 8. Compila o APK de Release
+      # IMPORTANTE: Por padrão, gera um APK NÃO ASSINADO. Para a loja, você precisa configurar chaves de assinatura.
       - name: Build Release APK
-        # Note: A real release build requires signing keys.
-        # This will build an unsigned release APK unless you set up secrets.
         run: ./gradlew assembleRelease
         working-directory: ./android
 
+      # 9. Compila o AAB (Android App Bundle) de Release
+      # IMPORTANTE: Também gera um AAB NÃO ASSINADO por padrão.
       - name: Build Release AAB
-        # Note: A real release build requires signing keys.
         run: ./gradlew bundleRelease
         working-directory: ./android
 
+      # 10. Faz o upload dos arquivos gerados (artefatos)
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -67,3 +75,4 @@ jobs:
             android/app/build/outputs/apk/debug/app-debug.apk
             android/app/build/outputs/apk/release/app-release-unsigned.apk
             android/app/build/outputs/bundle/release/app-release.aab
+
