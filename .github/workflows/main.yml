@@ -1,3 +1,7 @@
+# Lydecraft - Build APK & AAB
+# This workflow installs dependencies, syncs the capacitor project,
+# and then builds the Android debug/release APKs and AAB.
+
 name: Lydecraft - Build APK & AAB
 
 on:
@@ -13,41 +17,47 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: List files (debug)
-        run: ls -lR
+      # --- New Steps for Capacitor Project Setup ---
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Specify your project's node version
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Sync Capacitor project
+        run: npx cap sync android
+      # --- End of New Steps ---
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v2
-
-      - name: Accept Android SDK licenses
-        run: yes | sdkmanager --licenses
-
       - name: Make gradlew executable
-        run: chmod +x ./android/gradlew
-
-      - name: Generate debug.keystore (if needed)
-        run: |
-          if [ ! -f android/debug.keystore ]; then
-            keytool -genkeypair -alias androiddebugkey -keyalg RSA -keysize 2048 -keypass android \
-            -keystore android/debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 10000
-          fi
+        # The working-directory makes the command cleaner.
+        # It's now looking for 'gradlew' inside the 'android' folder.
+        run: chmod +x ./gradlew
+        working-directory: ./android
 
       - name: Build Debug APK
-        run: ./android/gradlew assembleDebug
+        run: ./gradlew assembleDebug
+        working-directory: ./android
 
-      - name: Build Release APK (signed)
-        run: ./android/gradlew assembleRelease
+      - name: Build Release APK
+        # Note: A real release build requires signing keys.
+        # This will build an unsigned release APK unless you set up secrets.
+        run: ./gradlew assembleRelease
+        working-directory: ./android
 
       - name: Build Release AAB
-        run: ./android/gradlew bundleRelease
+        # Note: A real release build requires signing keys.
+        run: ./gradlew bundleRelease
+        working-directory: ./android
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -55,5 +65,5 @@ jobs:
           name: lydecraft-builds
           path: |
             android/app/build/outputs/apk/debug/app-debug.apk
-            android/app/build/outputs/apk/release/app-release.apk
+            android/app/build/outputs/apk/release/app-release-unsigned.apk
             android/app/build/outputs/bundle/release/app-release.aab
