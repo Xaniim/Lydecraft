@@ -18,32 +18,27 @@ export class World {
 
         const textureLoader = new THREE.TextureLoader();
 
-        const grassTopTexture = textureLoader.load('src/Assets/World/grassblock/v1/up.png');
-        const grassSideTexture = textureLoader.load('src/Assets/World/grassblock/v1/side.png');
-        const dirtTexture = textureLoader.load('src/Assets/World/grassblock/v1/down.png');
+        const texturePaths = {
+            'grass_top': 'src/Assets/World/grassblock/v1/up.png',
+            'grass_side': 'src/Assets/World/grassblock/v1/side.png',
+            'dirt': 'src/Assets/World/grassblock/v1/down.png',
+            'sand': 'src/Assets/World/sand/sand.png',
+            'stone': 'src/Assets/World/stone/stone.png',
+            'leaves': 'src/Assets/World/leaves/leaves.png',
+            'trunk_side': 'src/Assets/World/trunk/trunk_sides.png',
+            'trunk_top': 'src/Assets/World/trunk/trunk_up_down.png'
+        };
 
-        grassTopTexture.magFilter = THREE.NearestFilter;
-        grassTopTexture.minFilter = THREE.NearestFilter;
-        grassSideTexture.magFilter = THREE.NearestFilter;
-        grassSideTexture.minFilter = THREE.NearestFilter;
-        dirtTexture.magFilter = THREE.NearestFilter;
-        dirtTexture.minFilter = THREE.NearestFilter;
-
-        this.materials['grass_top'] = new THREE.MeshLambertMaterial({ map: grassTopTexture, side: THREE.DoubleSide });
-        this.materials['grass_top'].u_time_generated = new THREE.Uniform(0);
-        this.materials['grass_top'].u_animation_duration = new THREE.Uniform(this.animationDuration);
-
-        this.materials['grass_side'] = new THREE.MeshLambertMaterial({ map: grassSideTexture });
-        this.materials['grass_side'].u_time_generated = new THREE.Uniform(0);
-        this.materials['grass_side'].u_animation_duration = new THREE.Uniform(this.animationDuration);
-
-        this.materials['dirt'] = new THREE.MeshLambertMaterial({ map: dirtTexture });
-        this.materials['dirt'].u_time_generated = new THREE.Uniform(0);
-        this.materials['dirt'].u_animation_duration = new THREE.Uniform(this.animationDuration);
+        for (const name in texturePaths) {
+            const texture = textureLoader.load(texturePaths[name]);
+            texture.magFilter = THREE.NearestFilter;
+            texture.minFilter = THREE.NearestFilter;
+            this.materials[name] = new THREE.MeshLambertMaterial({ map: texture, side: THREE.DoubleSide });
+        }
 
         const materialColors = {
-            sand: 0xF0E68C, snow: 0xffffff,
-            stone: 0x888888, trunk: 0x5C3D2E, leaf: 0x2E8B57, cactus: 0x006400,
+            snow: 0xffffff,
+            cactus: 0x006400,
             water: 0x4488ff
         };
 

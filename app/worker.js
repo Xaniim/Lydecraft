@@ -14,7 +14,7 @@ const materialMap = {
     [blockTypes.dirt]: 'dirt',
     [blockTypes.sand]: 'sand', 
     [blockTypes.snow]: 'snow',
-    [blockTypes.trunk]: 'trunk',
+    [blockTypes.trunk]: 'trunk_side',
     [blockTypes.leaf]: 'leaf', 
     [blockTypes.water]: 'water',
     [blockTypes.bedrock]: 'stone'
@@ -206,6 +206,35 @@ function generateChunkData(cx, cz) {
                         }
                         else if (faceName === 'down') {
                             materialNameToUse = 'dirt';
+                        }
+
+                        if (!geometries[materialNameToUse]) geometries[materialNameToUse] = { positions: [], indices: [], uvs: [] };
+                        const geo = geometries[materialNameToUse];
+                        const baseIndex = geo.positions.length / 3;
+                        for (const corner of face.corners) geo.positions.push(x + corner[0], y + corner[1], z + corner[2]);
+                        geo.indices.push(baseIndex, baseIndex + 1, baseIndex + 2, baseIndex, baseIndex + 2, baseIndex + 3);
+                        geo.uvs.push(...face.uvs);
+                    }
+                } else if (blockType === blockTypes.trunk) {
+                    for (const faceName in faces) {
+                        const face = faces[faceName];
+                        const neighborType = getBlock(x + face.dir[0], y + face.dir[1], z + face.dir[2]);
+
+                        const currentIsTransparent = transparentBlocks.has(blockType);
+                        const neighborIsTransparent = transparentBlocks.has(neighborType);
+                        let showFace = false;
+
+                        if (currentIsTransparent !== neighborIsTransparent) {
+                            showFace = true;
+                        } else if (currentIsTransparent && neighborIsTransparent && blockType !== neighborType) {
+                            showFace = true;
+                        }
+
+                        if (!showFace) continue;
+
+                        let materialNameToUse = 'trunk_side'; // Default for sides
+                        if (faceName === 'up' || faceName === 'down') {
+                            materialNameToUse = 'trunk_top';
                         }
 
                         if (!geometries[materialNameToUse]) geometries[materialNameToUse] = { positions: [], indices: [], uvs: [] };
