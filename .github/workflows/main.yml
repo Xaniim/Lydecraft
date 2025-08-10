@@ -11,12 +11,9 @@ on:
 # Tarefas (Jobs) a serem executadas
 jobs:
   build:
-    # Nome da tarefa que aparece no GitHub
     name: Build Debug, Release APK and AAB
-    # Máquina virtual que será usada para executar a tarefa
     runs-on: ubuntu-latest
 
-    # Passos (Steps) da tarefa
     steps:
       # 1. Baixa o código do seu repositório
       - name: Checkout repository
@@ -26,9 +23,9 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Especifique a versão do Node.js do seu projeto
+          node-version: '20'
 
-      # 3. Instala as dependências do projeto (Capacitor CLI, etc.)
+      # 3. Instala as dependências do projeto
       - name: Install npm dependencies
         run: npm install
 
@@ -36,35 +33,28 @@ jobs:
       - name: Sync Capacitor project
         run: npx cap sync android
 
-      # 5. Configura o ambiente Java (JDK) necessário para o Android
+      # 5. Configura o ambiente Java (JDK)
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # 6. Dá permissão de execução para o script do Gradle
-      # O 'working-directory' garante que o comando seja executado dentro da pasta /android
+      # 6. Dá permissão de execução para o script do Gradle (apontando para o caminho correto)
       - name: Make gradlew executable
-        run: chmod +x ./gradlew
-        working-directory: ./android
+        run: chmod +x android/gradlew
 
-      # 7. Compila o APK de Debug
+      # 7. Compila o APK de Debug (usando o caminho correto)
       - name: Build Debug APK
-        run: ./gradlew assembleDebug
-        working-directory: ./android
+        run: ./android/gradlew -p android assembleDebug
 
-      # 8. Compila o APK de Release
-      # IMPORTANTE: Por padrão, gera um APK NÃO ASSINADO. Para a loja, você precisa configurar chaves de assinatura.
+      # 8. Compila o APK de Release (usando o caminho correto)
       - name: Build Release APK
-        run: ./gradlew assembleRelease
-        working-directory: ./android
+        run: ./android/gradlew -p android assembleRelease
 
-      # 9. Compila o AAB (Android App Bundle) de Release
-      # IMPORTANTE: Também gera um AAB NÃO ASSINADO por padrão.
+      # 9. Compila o AAB de Release (usando o caminho correto)
       - name: Build Release AAB
-        run: ./gradlew bundleRelease
-        working-directory: ./android
+        run: ./android/gradlew -p android bundleRelease
 
       # 10. Faz o upload dos arquivos gerados (artefatos)
       - name: Upload artifacts
@@ -75,4 +65,3 @@ jobs:
             android/app/build/outputs/apk/debug/app-debug.apk
             android/app/build/outputs/apk/release/app-release-unsigned.apk
             android/app/build/outputs/bundle/release/app-release.aab
-
