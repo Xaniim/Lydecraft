@@ -42,7 +42,7 @@ jobs:
 
       # 6. Dá permissão de execução para o script do Gradle (apontando para o caminho correto)
       - name: Make gradlew executable
-        run: chmod +x android/gradlew
+        run: cd android && chmod +x gradlew
 
       # 7. Compila o APK de Debug (usando o caminho correto)
       - name: Build Debug APK
