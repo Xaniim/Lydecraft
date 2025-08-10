@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Lydecraft</string>
+    <string name="title_activity_main">Lydecraft</string>
+    <string name="package_name">com.maygames.lydecraft</string>
+    <string name="custom_url_scheme">com.maygames.lydecraft</string>
+</resources>
