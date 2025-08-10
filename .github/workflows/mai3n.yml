@@ -1,0 +1,58 @@
+name: Lydecraft - Build APK & AAB
+
+on:
+  push:
+    branches: [ alpha ]
+  pull_request:
+    branches: [ alpha ]
+
+jobs:
+  build:
+    name: Build Debug, Release APK and AAB
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Generate debug.keystore (if needed)
+        run: |
+          if [ ! -f debug.keystore ]; then
+            keytool -genkeypair -alias androiddebugkey -keyalg RSA -keysize 2048 -keypass android -keystore debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 10000
+          fi
+
+      - name: Copy debug.keystore to app folder
+        run: cp debug.keystore ./app/
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Build Release APK (signed)
+        run: ./gradlew assembleRelease
+
+      - name: Build Release AAB
+        run: ./gradlew bundleRelease
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lydecraft-builds
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            app/build/outputs/apk/release/app-release.apk
+            app/build/outputs/bundle/release/app-release.aab
