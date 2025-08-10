@@ -2,9 +2,9 @@ name: Lydecraft - Build APK & AAB
 
 on:
   push:
-    branches: [ main ]
+    branches: [ alpha ]
   pull_request:
-    branches: [ main ]
+    branches: [ alpha ]
 
 jobs:
   build:
@@ -33,19 +33,19 @@ jobs:
       - name: Generate debug.keystore (if needed)
         run: |
           if [ ! -f debug.keystore ]; then
-            keytool -genkeypair -alias androiddebugkey -keypass android -keystore debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 10000
+            keytool -genkeypair -alias androiddebugkey -keyalg RSA -keysize 2048 -keypass android -keystore debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 10000
           fi
 
-      - name: Copy debug.keystore to android project folder
+      - name: Copy debug.keystore to app folder
         run: cp debug.keystore ./app/
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug
 
-      - name: Build Release APK (assinado automático)
+      - name: Build Release APK (signed)
         run: ./gradlew assembleRelease
 
-      - name: Build Release AAB (Android App Bundle)
+      - name: Build Release AAB
         run: ./gradlew bundleRelease
 
       - name: Upload artifacts
