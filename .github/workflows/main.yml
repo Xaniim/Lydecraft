@@ -12,44 +12,54 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Baixa o código
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. Configura Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
+      # 3. Instala dependências
       - name: Install npm dependencies
         run: npm install
 
-      - name: Sync Capacitor project
-        run: npx cap sync
-
-      - name: Add Android platform if missing
+      # 4. Adiciona Android se não existir
+      - name: Add Android platform
         run: |
           if [ ! -d "android" ]; then
             npx cap add android
           fi
 
+      # 5. Sincroniza Capacitor
+      - name: Sync Capacitor project
+        run: npx cap sync android
+
+      # 6. Configura JDK
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
+      # 7. Dá permissão ao gradlew
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
+      # 8. Build Debug APK
       - name: Build Debug APK
         run: cd android && ./gradlew assembleDebug
 
-      - name: Build Release APK
+      # 9. Build Release APK
         run: cd android && ./gradlew assembleRelease
 
+      # 10. Build Release AAB
       - name: Build Release AAB
         run: cd android && ./gradlew bundleRelease
 
+      # 11. Upload artifacts
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
